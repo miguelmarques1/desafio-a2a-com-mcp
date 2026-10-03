@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import asyncio
+import io
 import json
 import socket
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from starlette.testclient import TestClient
+
+from agente.app import build_app
+from agente.config import Settings
+from agente.handlers import Handlers, stub_continuation_handler, stub_new_task_handler
+from agente.protocol import TaskState
 
 
 class FixedIds:
@@ -69,3 +78,149 @@ def free_port() -> int:
 @pytest.fixture(name="free_port")
 def free_port_fixture():
     return free_port
+
+
+# --- app-level helpers ---------------------------------------------------
+
+
+class Scripted:
+    """Handlers built from steps: ("transition", state, text|None), ("artifact", name, text),
+    ("append", text), ("attach", value), ("raise", exc), ("wait", asyncio.Event),
+    ("set", asyncio.Event), ("resume",) is not needed: use transition."""
+
+    def __init__(self, new=None, cont=None):
+        self.new_steps = new
+        self.cont_steps = cont
+
+    @staticmethod
+    def _make(steps, fallback):
+        if steps is None:
+            return fallback
+
+        async def handler(ctx, task):
+            for step in steps:
+                kind = step[0]
+                if kind == "transition":
+                    task.transition(step[1], step[2] if len(step) > 2 else None)
+                elif kind == "artifact":
+                    task.add_artifact(step[1], step[2])
+                elif kind == "append":
+                    task.append_message(step[1])
+                elif kind == "attach":
+                    task.set_attachment(step[1])
+                elif kind == "raise":
+                    raise step[1]
+                elif kind == "wait":
+                    await step[1].wait()
+                elif kind == "set":
+                    step[1].set()
+                elif kind == "call":
+                    step[1](ctx, task)
+                else:
+                    raise AssertionError(kind)
+
+        return handler
+
+    def handlers(self) -> Handlers:
+        return Handlers(
+            new_task=self._make(self.new_steps, stub_new_task_handler),
+            continuation=self._make(self.cont_steps, stub_continuation_handler),
+        )
+
+
+class Recorder:
+    """Records each RequestContext and the Task state it saw, then fails the Task."""
+
+    def __init__(self):
+        self.new_calls: list = []
+        self.cont_calls: list = []
+
+    def handlers(self) -> Handlers:
+        async def new(ctx, task):
+            self.new_calls.append((ctx, task.snapshot()))
+            task.transition(TaskState.FAILED, "gravado")
+
+        async def cont(ctx, task):
+            self.cont_calls.append((ctx, task.snapshot()))
+            task.transition(TaskState.FAILED, "gravado")
+
+        return Handlers(new_task=new, continuation=cont)
+
+
+@pytest.fixture
+def scripted():
+    return Scripted
+
+
+@pytest.fixture
+def recording():
+    return Recorder
+
+
+@pytest.fixture
+def make_client():
+    opened: list[TestClient] = []
+
+    def factory(handlers=None, ids=None, public_url="http://localhost:7300", store=None):
+        settings = Settings("127.0.0.1", 7300, public_url)
+        log = io.StringIO()
+        handlers = handlers or Handlers(stub_new_task_handler, stub_continuation_handler)
+        app = build_app(settings, handlers=handlers, ids=ids, store=store, log_stream=log)
+        client = TestClient(app, base_url="http://127.0.0.1:7300")
+        client.__enter__()
+        opened.append(client)
+        return SimpleNamespace(
+            client=client,
+            app=app,
+            log=log,
+            lines=lambda: [line for line in log.getvalue().splitlines() if line.startswith("a2a ")],
+        )
+
+    yield factory
+    for client in opened:
+        client.__exit__(None, None, None)
+
+
+def _body(method, params, rpc_id):
+    return {"jsonrpc": "2.0", "id": rpc_id, "method": method, "params": params}
+
+
+def _headers(traceparent, version):
+    headers = {"Content-Type": "application/json"}
+    if traceparent:
+        headers["traceparent"] = traceparent
+    if version is not None:
+        headers["A2A-Version"] = version
+    return headers
+
+
+@pytest.fixture
+def a2a_post():
+    def post(client, method=None, params=None, *, id=1, traceparent=None, version=None, raw=None):
+        content = raw if raw is not None else json.dumps(_body(method, params, id))
+        return client.post("/a2a", content=content, headers=_headers(traceparent, version))
+
+    return post
+
+
+def message_params(text, *, task_id=None, message_id="msg-6ae2ad6802e5"):
+    message = {"messageId": message_id, "role": "ROLE_USER", "parts": [{"text": text}]}
+    if task_id:
+        message["taskId"] = task_id
+    return {"message": message}
+
+
+@pytest.fixture
+def send(a2a_post):
+    def do(client, text="reservar sala=x", *, task_id=None, id=1, message_id="msg-6ae2ad6802e5", **kw):
+        return a2a_post(
+            client, "SendMessage", message_params(text, task_id=task_id, message_id=message_id),
+            id=id, **kw
+        )
+
+    return do
+
+
+@pytest.fixture
+def run_async():
+    return asyncio.run
