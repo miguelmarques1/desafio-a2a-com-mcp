@@ -1,6 +1,6 @@
 # Implementation Progress: MCP Server Foundation
 
-**Status:** in progress
+**Status:** success
 **Branch:** feat/a2a-agent-and-mcp-server-implementation
 **Started:** 2026-10-03
 **Last updated:** 2026-10-03
@@ -18,7 +18,7 @@
 - No lint/typecheck tooling is declared by the spec or manifest (no ruff/mypy pinned); none was added.
 
 **Validation:** `pip install -e` ✅ · imports ✅ (no tests exist yet at this stage)
-**Commit:** _(see Final verification)_
+**Commit:** 5210be8 feat(F01): project scaffold and SDK baseline
 
 ## Stage 2: Configuration and In-Memory Domain — ✅ done
 
@@ -34,7 +34,7 @@
 - `test_unreadable_file_reports_reason` is skipped on Windows (chmod 000 ineffective), as the spec allows.
 
 **Validation:** unit tests (config, paths, loader, dominio) ✅ with the final conftest
-**Commit:** _(see Final verification)_
+**Commit:** 72adcbc feat(F01): configuration and in-memory domain
 
 ## Stage 3: MCP Transport and Observability — ✅ done
 
@@ -50,7 +50,7 @@
 - Probe tool test confirmed capabilities are read per request (`form`, `{}`, `{"elicitation": {}}`, `form` → True, False, False, True). Tool results of a plain `-> dict` tool carry the JSON only in the text block (no `structuredContent`), so the probe is read from `content[0].text`.
 
 **Validation:** unit (request_log, request_context) ✅ · integration test_transport ✅
-**Commit:** _(see Final verification)_
+**Commit:** 8aead1d feat(F01): MCP transport and request log
 
 ## Stage 4: Process Startup — ✅ done
 
@@ -63,4 +63,17 @@
 - Real-process smoke run: banner, `tools/list`, `server/discover`, `-32602` ×2, `-32020`, `-32700` and the stderr request lines all observed against `python -m servidor_mcp` from an unrelated cwd.
 
 **Validation:** unit test_network ✅ · integration test_process ✅ · test_cross_feature_f01 (skips until F02–F05 land) ✅
-**Commit:** _(see Final verification)_
+**Commit:** 90d2e5a feat(F01): process startup
+
+## Final verification
+
+- Full suite (`pytest tests` in `servidor-mcp/`, repo-root venv): **101 passed, 10 skipped, 0 failed**. Skips: 7 cross-feature tests waiting for F02–F05 (activate automatically), 3 POSIX/root-only tests (`chmod 000` ×2, SIGTERM).
+- Component Overview walk-through: every file listed in spec Section 4 exists; `servidor-mcp/.gitkeep` removed; `.gitignore` extended. Nothing missing.
+- AC re-check (PRD Section 9, F01): all 9 criteria map to passing tests; AC 9 is covered by the portable `test_missing_data_file_exits_1` because the POSIX `chmod 000` test cannot run on this Windows host.
+- Smoke check: real `python -m servidor_mcp` process exercised from an unrelated cwd (banner, requests, error codes, stderr lines) — passed.
+
+**Soft-fails / open follow-up**
+- No lint or typecheck commands exist for the project (none specified in the spec); none run.
+- POSIX-only tests (`test_unreadable_salas_json_exits_1`, `test_unreadable_file_reports_reason`, `test_sigterm_shuts_down_with_exit_code_0`) not exercised on Windows; run them once on Linux/macOS.
+- F10 README must document: editable install (`pip install -e ./servidor-mcp`), and the SDK limitation that an absent or handshake-era `MCP-Protocol-Version` header is served by the SDK's legacy path instead of `-32020` (Stage 1 observations).
+- F05 must add the `REQUEST_STATE_SECRET` validation in the reserved slot of `__main__.main`.
