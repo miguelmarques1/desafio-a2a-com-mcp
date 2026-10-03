@@ -3,7 +3,13 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import os
+import secrets
 import socket
+import subprocess
+import sys
+import threading
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -224,3 +230,104 @@ def send(a2a_post):
 @pytest.fixture
 def run_async():
     return asyncio.run
+
+
+# --- subprocess helpers --------------------------------------------------
+
+
+class Process:
+    def __init__(self, proc: subprocess.Popen, port: int):
+        self.proc = proc
+        self.port = port
+        self.lines: list[str] = []
+        self._thread = threading.Thread(target=self._pump, daemon=True)
+        self._thread.start()
+
+    def _pump(self) -> None:
+        for line in self.proc.stderr:
+            self.lines.append(line.rstrip("\r\n"))
+
+    def wait_for_line(self, fragment: str, timeout: float = 20.0) -> bool:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if any(fragment in line for line in self.lines):
+                return True
+            if self.proc.poll() is not None:
+                time.sleep(0.2)
+                return any(fragment in line for line in self.lines)
+            time.sleep(0.05)
+        return False
+
+    def wait_for_count(self, prefix: str, count: int, timeout: float = 10.0) -> None:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if len([ln for ln in self.lines if ln.startswith(prefix)]) >= count:
+                return
+            time.sleep(0.05)
+
+    def stop(self) -> int | None:
+        if self.proc.poll() is None:
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+                self.proc.wait()
+        self._thread.join(timeout=5)
+        return self.proc.returncode
+
+    def wait_exit(self, timeout: float = 20.0) -> int:
+        return self.proc.wait(timeout=timeout)
+
+
+def _spawn(module: str, env: dict, cwd, port: int) -> Process:
+    proc = subprocess.Popen(
+        [sys.executable, "-m", module],
+        env={k: v for k, v in env.items() if v is not None},
+        cwd=str(cwd) if cwd else None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    return Process(proc, port)
+
+
+@pytest.fixture
+def start_agent():
+    started: list[Process] = []
+
+    def start(*, port: int | None = None, env: dict | None = None, cwd=None, wait_banner=True):
+        port = port if port is not None else free_port()
+        full_env = dict(os.environ)
+        for key in ("AGENT_PORT", "AGENT_HOST", "AGENT_PUBLIC_URL", "MCP_URL"):
+            full_env.pop(key, None)
+        full_env["AGENT_PORT"] = str(port)
+        full_env.update(env or {})
+        agent = _spawn("agente", full_env, cwd, port)
+        started.append(agent)
+        if wait_banner:
+            agent.wait_for_line("ouvindo em")
+        return agent
+
+    yield start
+    for agent in started:
+        agent.stop()
+
+
+@pytest.fixture
+def start_mcp_server():
+    pytest.importorskip("servidor_mcp")
+    started: list[Process] = []
+
+    def start(*, port: int | None = None):
+        port = port if port is not None else free_port()
+        env = dict(os.environ)
+        env.update(MCP_PORT=str(port), REQUEST_STATE_SECRET=secrets.token_hex(32))
+        server = _spawn("servidor_mcp", env, None, port)
+        started.append(server)
+        server.wait_for_line("ouvindo em")
+        return server
+
+    yield start
+    for server in started:
+        server.stop()

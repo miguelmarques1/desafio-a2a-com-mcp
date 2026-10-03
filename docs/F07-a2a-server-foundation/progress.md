@@ -56,4 +56,20 @@
 - `test_routing_and_concurrency.py` builds its handlers' `asyncio.Event`s inside the running loop.
 
 **Validation:** lint n/a · typecheck n/a · tests 212/212 ✅ (full `agente/` suite at this point)
+**Commit:** cdc0b20 feat(F07): JSON-RPC endpoint, extension points and agent card
+
+## Stage 4: Process Startup — ✅ done
+
+- [x] **13. Runtime Configuration and Listening Socket** (config landed in stage 3; socket here)
+- [x] **14. Entry Point and Startup Sequence**
+
+**Observations:**
+- `network.py` is an independent copy of F01's (Windows also maps `WSAEACCES` 10013 to port-in-use, as in F01); `__main__.py` mirrors F01's sequence and prints the three banner lines of spec 5.8 after the bind.
+- `test_sigterm_shuts_down_with_exit_code_0` is skipped on Windows (`Process.terminate()` is a hard kill); graceful exit `0` was not exercised here.
+- Added `test_request_lines_match_contract` (process-level `a2a ...` line) beyond the spec list.
+- `conftest.py` gained `Process`, `start_agent` and `start_mcp_server`; the latter skips when `servidor_mcp` is not importable.
+- `test_cross_feature_f07.py`: three tests, each skipped with "consumer feature not registered yet" while `build_handlers` still returns the F07 stubs (they activate when F08/F09 land).
+- Real-process smoke: `python -m agente` started alongside `servidor_mcp` and `validador/validar.py` run against it: checks 21, 22, 23, 31, 34 pass (card, interface, skill, `-32004` on terminal Task, no `requestState` leak). Checks 24–30, 32, 33, 35, 36 fail only because F08/F09 are still the stub handlers (`Skill reservar-sala ainda nao implementada`), as expected.
+
+**Validation:** lint n/a · typecheck n/a · tests 226 passed, 4 skipped, 0 failed ✅ (test_network, test_process, cross-feature gated)
 **Commit:** _(pending)_
