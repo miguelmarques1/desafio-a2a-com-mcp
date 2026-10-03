@@ -17,4 +17,20 @@
 - No lint/typecheck tooling is declared by the spec or manifests; none run.
 
 **Validation:** `pip install -e "./agente[dev]"` ✅ · `pip check` ✅ · imports ✅
+**Commit:** 246c8a9 feat(F07): project scaffold and dependency baseline
+
+## Stage 2: A2A Data Model and Task Lifecycle — ✅ done
+
+- [x] **4. A2A Data Model and Wire Serialization**
+- [x] **5. Task State Machine**
+- [x] **6. In-Memory Task Store**
+
+**Observations:**
+- `TaskStore.handle()` builds a `TaskHandle` that caches `context_id` (raises `TaskNotFoundError` for unknown ids). `TaskStore` also exposes `context_id_of`, an addition beyond the spec's list.
+- Terminal Tasks raise `TaskImmutableError` from every handle write (checked before the transition table); `InvalidTransitionError` is raised for table violations and for `INPUT_REQUIRED -> WORKING` without a continuation claim.
+- `settle` only fails `SUBMITTED`/`WORKING`; a paused (`INPUT_REQUIRED`) or terminal Task is left alone.
+- Handles use `__slots__` and a `repr` without attachment content.
+- `tests/conftest.py` currently holds `repo_root`, `wire`, `fixed_ids`, `free_port`; the app-level fixtures (`make_client`, `a2a_post`, `send`, `scripted`, `recording`, `start_agent`, `start_mcp_server`) are added in stage 3/4 when the modules they import exist.
+
+**Validation:** lint n/a · typecheck n/a · tests 92/92 ✅ (ids, protocol, lifecycle, task_store)
 **Commit:** _(pending)_
