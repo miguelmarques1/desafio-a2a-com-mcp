@@ -1,6 +1,6 @@
 # Implementation Progress: A2A Server Foundation
 
-**Status:** in progress
+**Status:** success
 **Branch:** feat/a2a-agent-and-mcp-server-implementation
 **Started:** 2026-10-03
 **Last updated:** 2026-10-03
@@ -72,4 +72,18 @@
 - Real-process smoke: `python -m agente` started alongside `servidor_mcp` and `validador/validar.py` run against it: checks 21, 22, 23, 31, 34 pass (card, interface, skill, `-32004` on terminal Task, no `requestState` leak). Checks 24–30, 32, 33, 35, 36 fail only because F08/F09 are still the stub handlers (`Skill reservar-sala ainda nao implementada`), as expected.
 
 **Validation:** lint n/a · typecheck n/a · tests 226 passed, 4 skipped, 0 failed ✅ (test_network, test_process, cross-feature gated)
-**Commit:** _(pending)_
+**Commit:** 1af9418 feat(F07): process startup
+
+## Final verification
+
+- Full suites (repo-root venv): `python -m pytest agente` → **226 passed, 4 skipped, 0 failed**; `python -m pytest servidor-mcp` → 101 passed, 10 skipped, 0 failed (F01 unaffected by the shared venv). Skips in `agente`: 3 cross-feature tests waiting for F08/F09 (activate automatically), 1 POSIX-only SIGTERM test.
+- Component Overview walk-through (spec Section 4): every file exists with its described contracts (`pyproject.toml`, all 16 modules plus `skills/__init__.py`, `.gitkeep` removed, `.gitignore` already covered). Nothing missing.
+- AC re-check (PRD Section 9, F07): all 8 criteria map to passing tests, re-run fresh (23 mapped tests passed).
+- Smoke check: real `python -m agente` + `servidor_mcp` + `validador/validar.py`: validator checks 21, 22, 23, 31, 34 pass; checks needing F08/F09 fail on the stub message as designed.
+
+**Soft-fails / open follow-up**
+- No lint or typecheck commands exist for the project (none specified); none run.
+- `test_sigterm_shuts_down_with_exit_code_0` not exercised on Windows; run once on Linux/macOS.
+- Cross-feature tests (`test_cross_feature_f07.py`) are skipped until F08/F09 replace the stubs in `agente/skills/__init__.py`; they have not run against real consumers yet.
+- F10 README must document: editable install `pip install -e ./agente` (dev: `-e "./agente[dev]"`) into the repo-root venv; no `editable_mode=compat` needed (V2 verified on Python 3.14).
+- F06 must add `mcp_url` (`MCP_URL`) to `Settings`; F08/F09 plug handlers in via `skills.build_handlers`.
