@@ -319,10 +319,10 @@ O SDK também carimba sozinho `resultType` nas respostas e `serverInfo` no `_met
 
 ## Saída do validador
 
-Execução de 2026-10-04 em Windows 11 com Python 3.14.4, feita a partir de um clone limpo da branch e seguindo apenas "Como rodar" (caminho PowerShell), com o servidor MCP e o agente recém-iniciados antes da execução e código de saída `0`. A saída está colada sem cortes:
+Execução de 2026-10-04 em Windows 11 com Python 3.14.4, a partir de um clone limpo do commit entregue, seguindo os comandos de "Como rodar" (ambiente virtual, `pip install -e`, segredo gerado e exportado, `python -m servidor_mcp`, `python -m agente`, valores padrão de porta e `MCP_URL`), com os dois processos recém-iniciados e código de saída `0`. A mesma sequência também passou nas 36 verificações com Python 3.12.13. A saída está colada sem cortes:
 
 ```text
-trace-id desta execucao: 5cdf82a376bf0264c35af040140ae346
+trace-id desta execucao: 9e47382fb886b6a8070c1dae28a71f2f
 procure esse valor no stderr do servidor MCP para conferir a propagacao do traceparent.
 
 PASS 01 tools/list traz as tres tools
