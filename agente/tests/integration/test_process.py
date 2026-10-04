@@ -163,3 +163,17 @@ def test_request_lines_match_contract(start_agent):
     agent.wait_for_count("a2a ", 1)
     assert a2a_lines(agent) == ["a2a method=CancelTask id=7 task=- state=-"]
     assert re.fullmatch(r"a2a method=\S+ id=\S+ task=\S+ state=\S+", a2a_lines(agent)[0])
+
+
+def test_invalid_mcp_url_exits_1(start_agent):
+    agent = start_agent(env={"MCP_URL": "localhost:7301"}, wait_banner=False)
+    assert agent.wait_exit() == 1
+    assert agent.wait_for_line("MCP_URL invalida: localhost:7301")
+
+
+def test_agent_starts_without_mcp_server(start_agent, free_port):
+    agent = start_agent(env={"MCP_URL": f"http://127.0.0.1:{free_port()}/mcp"})
+    assert agent.wait_for_line("endpoint A2A anunciado")
+    status, text = http(agent.port)
+    assert status == 200 and json.loads(text)["supportedInterfaces"]
+    assert all(line.startswith(("agente ", "agent card", "endpoint A2A")) for line in agent.lines)

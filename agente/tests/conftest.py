@@ -331,3 +331,91 @@ def start_mcp_server():
     yield start
     for server in started:
         server.stop()
+
+
+# --- MCP host client helpers (F06) ---------------------------------------
+
+
+class MockMcp:
+    """McpClient on httpx.MockTransport. `answers` is a queue of (status, content_type, body)
+    tuples (body: dict/str/bytes), exceptions to raise, or a callable taking the request."""
+
+    def __init__(self, answers=(), timeout=10.0):
+        import httpx
+
+        from agente.mcp_host import McpClient
+
+        self.requests: list = []
+        self.bodies: list[dict] = []
+        self._answers = answers if callable(answers) else list(answers)
+        self.client = McpClient(
+            "http://localhost:7301/mcp", timeout=timeout, transport=httpx.MockTransport(self._handle)
+        )
+
+    async def _handle(self, request):
+        import httpx
+
+        self.requests.append(request)
+        self.bodies.append(json.loads(request.content))
+        answer = self._answers(request) if callable(self._answers) else self._answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        status, content_type, body = answer
+        if isinstance(body, (dict, list)):
+            body = json.dumps(body)
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        return httpx.Response(status, headers={"content-type": content_type}, content=body)
+
+
+def json_answer(body, status=200):
+    return (status, "application/json", body)
+
+
+@pytest.fixture
+def mock_mcp():
+    return MockMcp
+
+
+class _HungServer:
+    def __init__(self):
+        self._sock = socket.socket()
+        self._sock.bind(("127.0.0.1", 0))
+        self._sock.listen(8)
+        self.port = self._sock.getsockname()[1]
+        self._conns: list[socket.socket] = []
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def _accept(self):
+        while True:
+            try:
+                conn, _ = self._sock.accept()
+            except OSError:
+                return
+            self._conns.append(conn)
+
+    def close(self):
+        self._sock.close()
+        for conn in self._conns:
+            conn.close()
+
+
+@pytest.fixture
+def hung_server():
+    server = _HungServer()
+    yield server
+    server.close()
+
+
+@pytest.fixture
+def mcp_lines():
+    def parse(process):
+        rows = []
+        for line in list(process.lines):
+            if not line.startswith("mcp "):
+                continue
+            fields = dict(part.split("=", 1) for part in line.split()[1:] if "=" in part)
+            rows.append((fields.get("method"), fields.get("id"), fields.get("name"), fields.get("traceparent")))
+        return rows
+
+    return parse
