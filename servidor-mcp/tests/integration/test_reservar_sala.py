@@ -103,9 +103,13 @@ def test_second_booking_of_same_slot_is_not_created(fresh_app, mcp_post):
     client, _, dominio = fresh_app()
     reservar(client, mcp_post, "sala-aquario", h("09:00"), h("10:00"))
     r = reservar(client, mcp_post, "sala-aquario", h("09:00"), h("10:00"), "Marty")
-    if r.get("resultType") != "input_required":  # F05 replaces the interim branch
-        assert r["isError"] is True
-        assert r["content"][0]["text"] == "Sala ocupada no intervalo: sala-aquario"
+    assert r["resultType"] == "input_required"
+    (pedido,) = r["inputRequests"].values()
+    assert pedido["params"]["requestedSchema"]["properties"]["sala"]["enum"] == [
+        "sala-porao",
+        "sala-fusca",
+        "sala-garagem",
+    ]
     assert len(dominio.reservas) == 3
 
 

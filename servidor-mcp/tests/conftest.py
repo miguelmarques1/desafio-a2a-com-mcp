@@ -117,14 +117,18 @@ def mcp_post():
 
 @pytest.fixture
 def fresh_app(repo_root: Path):
-    """Factory: ``make(registrars=None)`` -> (TestClient, log_lines, dominio); None means the production registry. Close handled at teardown."""
+    """Factory: ``make(registrars=None, request_state_security=None)`` -> (TestClient, log_lines, dominio).
+
+    ``registrars=None`` means the production registry; ``request_state_security=None`` keeps the SDK's
+    ephemeral per-process key. Close handled at teardown.
+    """
     stack: list[TestClient] = []
 
-    def make(registrars=None):
+    def make(registrars=None, request_state_security=None):
         dominio = load_dominio(repo_root / "dados")
         if registrars is None:
             registrars = REGISTRARS
-        server = build_server(dominio, registrars=registrars)
+        server = build_server(dominio, registrars=registrars, request_state_security=request_state_security)
         stream = io.StringIO()
         settings = Settings("127.0.0.1", 7301, None, None)
         app = build_app(server, settings, log_stream=stream)

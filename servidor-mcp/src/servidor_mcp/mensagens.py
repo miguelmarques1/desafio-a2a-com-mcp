@@ -28,8 +28,6 @@ DURACAO_ACIMA_DO_LIMITE = "Duracao acima do limite: a politica permite no maximo
 # F04: reservation tool description and failure messages.
 DESCRICAO_RESERVAR_SALA = "Reserva uma sala. Se o intervalo estiver ocupado, pergunta qual alternativa usar."
 FALHA_INTERNA_RESERVA = "Falha interna ao registrar a reserva"
-# Interim, removed by F05 (replaced by the MRTR conflict flow).
-SALA_OCUPADA = "Sala ocupada no intervalo: {sala}"
 
 # F05: MRTR conflict resolution and request-state security.
 SEGREDO_INVALIDO = (
