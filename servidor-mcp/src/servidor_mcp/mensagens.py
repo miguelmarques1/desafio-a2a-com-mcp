@@ -30,3 +30,16 @@ DESCRICAO_RESERVAR_SALA = "Reserva uma sala. Se o intervalo estiver ocupado, per
 FALHA_INTERNA_RESERVA = "Falha interna ao registrar a reserva"
 # Interim, removed by F05 (replaced by the MRTR conflict flow).
 SALA_OCUPADA = "Sala ocupada no intervalo: {sala}"
+
+# F05: MRTR conflict resolution and request-state security.
+SEGREDO_INVALIDO = (
+    "REQUEST_STATE_SECRET ausente ou com menos de 32 bytes: "
+    'gere com python3 -c "import secrets; print(secrets.token_hex(32))"'
+)
+MENSAGEM_ESCOLHA = "A sala pedida esta ocupada nesse intervalo. Escolha uma alternativa."
+CAMPO_SALA_TITULO = "Sala"
+CAMPO_SALA_DESCRICAO = "Sala alternativa escolhida"
+SEM_ALTERNATIVAS = "Sem alternativas disponiveis no intervalo"
+ESTADO_INVALIDO = "Invalid or expired requestState"
+RESPOSTA_AUSENTE = "inputResponses sem resposta para {chave}"
+CAPACIDADE_AUSENTE = "Client did not declare the form elicitation capability required by '{chave}'"

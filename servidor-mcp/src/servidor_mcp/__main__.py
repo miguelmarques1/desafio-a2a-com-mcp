@@ -13,6 +13,7 @@ from servidor_mcp.config import ConfigError, load_settings
 from servidor_mcp.loader import DataLoadError, PolicyVersionMissingError, load_dominio
 from servidor_mcp.network import BindError, PortInUseError, bind_listening_socket
 from servidor_mcp.paths import resolve_dados_dir
+from servidor_mcp.seguranca import SegredoInvalidoError, politica_de_estado, validar_segredo
 from servidor_mcp.server import build_server
 
 
@@ -27,15 +28,17 @@ def main() -> int:
     except ConfigError as exc:
         return _fail(str(exc))
 
-    # --- Reserved slot (F05): validate settings.request_state_secret here and
-    # build the SDK RequestStateSecurity to pass to build_server. ---
+    try:
+        politica = politica_de_estado(validar_segredo(settings.request_state_secret))
+    except SegredoInvalidoError as exc:
+        return _fail(str(exc))
 
     try:
         dominio = load_dominio(resolve_dados_dir(settings.dados_dir))
     except (DataLoadError, PolicyVersionMissingError) as exc:
         return _fail(str(exc))
 
-    server = build_server(dominio)
+    server = build_server(dominio, request_state_security=politica)
     app = build_app(server, settings)
 
     try:
