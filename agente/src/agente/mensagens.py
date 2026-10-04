@@ -40,6 +40,13 @@ FALHA_INTERNA = "Falha interna do agente"
 STUB_SKILL_NAO_IMPLEMENTADA = "Skill reservar-sala ainda nao implementada"
 STUB_CONTINUACAO_NAO_IMPLEMENTADA = "Continuacao de Task ainda nao implementada"
 
+# Reservation skill (F08)
+PEDIDO_INVALIDO = (
+    "Pedido invalido: use reservar sala=<id> inicio=<iso8601> fim=<iso8601> responsavel=<nome>"
+)
+RESERVA_CONFIRMADA = "Reserva {reserva} confirmada na {sala}."
+STUB_PAUSA_NAO_IMPLEMENTADA = "Pausa para escolha de alternativa ainda nao implementada"
+
 # MCP host client (F06)
 MCP_INDISPONIVEL = "Servidor MCP indisponivel"
 MCP_ERRO = "Erro do servidor MCP: {detalhe}"
