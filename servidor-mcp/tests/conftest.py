@@ -19,6 +19,7 @@ from servidor_mcp.app import build_app
 from servidor_mcp.config import Settings
 from servidor_mcp.loader import load_dominio
 from servidor_mcp.paths import find_repo_root
+from servidor_mcp.primitives import REGISTRARS
 from servidor_mcp.server import build_server
 
 PROTOCOL_VERSION = "2026-07-28"
@@ -116,11 +117,13 @@ def mcp_post():
 
 @pytest.fixture
 def fresh_app(repo_root: Path):
-    """Factory: ``make(registrars=())`` -> (TestClient, log_lines). Close handled at teardown."""
+    """Factory: ``make(registrars=None)`` -> (TestClient, log_lines, dominio); None means the production registry. Close handled at teardown."""
     stack: list[TestClient] = []
 
-    def make(registrars=()):
+    def make(registrars=None):
         dominio = load_dominio(repo_root / "dados")
+        if registrars is None:
+            registrars = REGISTRARS
         server = build_server(dominio, registrars=registrars)
         stream = io.StringIO()
         settings = Settings("127.0.0.1", 7301, None, None)
