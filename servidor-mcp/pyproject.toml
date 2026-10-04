@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "servidor-mcp"
+version = "1.0.0"
+description = "Central de Salas: servidor MCP (Streamable HTTP, spec 2026-07-28)"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp==2.3.0",
+    "pydantic==2.13.5",
+    "uvicorn==0.54.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+]
+
+[project.scripts]
+servidor-mcp = "servidor_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
