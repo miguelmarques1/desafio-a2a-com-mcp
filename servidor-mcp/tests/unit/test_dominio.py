@@ -70,3 +70,47 @@ def test_ledger_concurrent_appends_are_all_kept(dominio):
 def test_as_dict_key_order_matches_data_files(dominio):
     assert list(dominio.catalogo.get("sala-aquario").as_dict()) == ["id", "nome", "capacidade", "recursos"]
     assert list(dominio.reservas.todas()[0].as_dict()) == ["id", "sala", "inicio", "fim", "responsavel"]
+
+
+def test_bloqueio_is_reentrant_with_ledger_methods(dominio):
+    done = threading.Event()
+
+    def work():
+        with dominio.reservas.bloqueio():
+            assert len(dominio.reservas.todas()) == 2
+            assert len(dominio.reservas.da_sala("sala-garagem")) == 1
+            dominio.reservas.adicionar(nova("res-0003"))
+        done.set()
+
+    t = threading.Thread(target=work, daemon=True)
+    t.start()
+    assert done.wait(timeout=5), "deadlock inside bloqueio()"
+    assert [r.id for r in dominio.reservas.todas()][-1] == "res-0003"
+
+
+def test_bloqueio_excludes_other_threads(dominio):
+    order: list[str] = []
+    entered = threading.Event()
+    release = threading.Event()
+
+    def holder():
+        with dominio.reservas.bloqueio():
+            entered.set()
+            release.wait(timeout=5)
+            order.append("A-exit")
+
+    def other():
+        dominio.reservas.adicionar(nova("res-0003"))
+        order.append("B-done")
+
+    a = threading.Thread(target=holder, daemon=True)
+    a.start()
+    assert entered.wait(timeout=5)
+    b = threading.Thread(target=other, daemon=True)
+    b.start()
+    b.join(timeout=0.3)
+    assert b.is_alive()
+    release.set()
+    a.join(timeout=5)
+    b.join(timeout=5)
+    assert order == ["A-exit", "B-done"]

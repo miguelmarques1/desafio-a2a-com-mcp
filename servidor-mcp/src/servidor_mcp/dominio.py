@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 
@@ -70,8 +71,14 @@ class CatalogoDeSalas:
 
 class LivroDeReservas:
     def __init__(self, reservas: Iterable[Reserva] = ()):
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._reservas: list[Reserva] = list(reservas)
+
+    @contextmanager
+    def bloqueio(self) -> Iterator[None]:
+        """Exclusive section: other threads wait; ledger methods may be called inside it."""
+        with self._lock:
+            yield
 
     def todas(self) -> tuple[Reserva, ...]:
         with self._lock:

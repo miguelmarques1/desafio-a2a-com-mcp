@@ -24,3 +24,9 @@ HORARIO_INVALIDO = "Horario invalido: {valor}"
 INTERVALO_INVALIDO = "Intervalo invalido: fim deve ser posterior a inicio"
 FORA_DA_JANELA = "Fora da janela de uso: a politica permite reservas entre 08:00 e 20:00"
 DURACAO_ACIMA_DO_LIMITE = "Duracao acima do limite: a politica permite no maximo 2 horas"
+
+# F04: reservation tool description and failure messages.
+DESCRICAO_RESERVAR_SALA = "Reserva uma sala. Se o intervalo estiver ocupado, pergunta qual alternativa usar."
+FALHA_INTERNA_RESERVA = "Falha interna ao registrar a reserva"
+# Interim, removed by F05 (replaced by the MRTR conflict flow).
+SALA_OCUPADA = "Sala ocupada no intervalo: {sala}"
