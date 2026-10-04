@@ -1,9 +1,9 @@
-"""Registration hook where the skill (F08) and the bridge (F09) plug in.
+"""Registration hook wiring the skill (F08) and the bridge (F09).
 
 Contract:
-- `new_task` is the `reservar-sala` skill handler (F08), built on the shared `McpClient`.
-- F09 passes its pause hook as `make_reservar_sala_handler(client, on_input_required=...)` and
-  replaces `continuation` with the pause/resume bridge, reusing the same client.
+- `new_task` is the `reservar-sala` skill handler (F08), with the bridge's `pause_for_choice`
+  as its input-required hook.
+- `continuation` is the bridge's continuation handler (F09); both share the one `McpClient`.
 - Shared resources (e.g. F06's MCP client) are built inside `build_handlers`,
   never at import time, and released through `Handlers.aclose`, which the app
   awaits on shutdown.
@@ -16,15 +16,16 @@ Contract:
 from __future__ import annotations
 
 from agente.config import Settings
-from agente.handlers import Handlers, stub_continuation_handler
+from agente.handlers import Handlers
 from agente.mcp_host import McpClient
+from agente.skills.bridge import make_continuation_handler, pause_for_choice
 from agente.skills.reservar_sala import make_reservar_sala_handler
 
 
 def build_handlers(settings: Settings) -> Handlers:
     client = McpClient(settings.mcp_url)
     return Handlers(
-        new_task=make_reservar_sala_handler(client),
-        continuation=stub_continuation_handler,
+        new_task=make_reservar_sala_handler(client, on_input_required=pause_for_choice),
+        continuation=make_continuation_handler(client),
         aclose=client.aclose,
     )

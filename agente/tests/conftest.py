@@ -319,10 +319,10 @@ def start_mcp_server():
     pytest.importorskip("servidor_mcp")
     started: list[Process] = []
 
-    def start(*, port: int | None = None):
+    def start(*, port: int | None = None, secret: str | None = None):
         port = port if port is not None else free_port()
         env = dict(os.environ)
-        env.update(MCP_PORT=str(port), REQUEST_STATE_SECRET=secrets.token_hex(32))
+        env.update(MCP_PORT=str(port), REQUEST_STATE_SECRET=secret or secrets.token_hex(32))
         server = _spawn("servidor_mcp", env, None, port)
         started.append(server)
         server.wait_for_line("ouvindo em")
