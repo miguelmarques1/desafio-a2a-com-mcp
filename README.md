@@ -13,8 +13,8 @@ Use **três terminais**: um para o servidor MCP, um para o agente e um para o va
 1. **Clonar** o repositório e entrar na raiz:
 
    ```bash
-   git clone <url-do-seu-fork>
-   cd <pasta-do-fork>
+   git clone https://github.com/miguelmarques1/desafio-a2a-com-mcp.git
+   cd desafio-a2a-com-mcp
    ```
 
 2. **Criar e ativar o ambiente virtual** (um único `.venv` na raiz, usado pelos dois pacotes):
@@ -29,6 +29,8 @@ Use **três terminais**: um para o servidor MCP, um para o agente e um para o va
    ```bash
    pip install -e ./servidor-mcp -e ./agente
    ```
+
+   Opcional, para reproduzir também as versões das dependências transitivas da execução registrada abaixo: `pip install -c constraints.txt -e ./servidor-mcp -e ./agente`.
 
 4. **Gerar o segredo do `requestState`.** Só o servidor MCP precisa dele; o agente não lê esse valor. O segredo tem de ter pelo menos 64 caracteres hexadecimais (32 bytes). Gere e exporte no **terminal 1**:
 
@@ -292,6 +294,7 @@ O `input_required` do MCP vira `TASK_STATE_INPUT_REQUIRED` em [`pause_task`](age
 - **Valores selados vencem.** No retry, o servidor reconstrói a reserva a partir do conteúdo selado (sala original, `inicio`, `fim`, `responsavel`, alternativas e chave) e ignora os `arguments` reenviados (`_retomar` em `servidor-mcp/src/servidor_mcp/primitives/reservar_sala.py`). Além disso, o envelope do SDK recusa o retry cujos `arguments` foram editados, mesmo com o `requestState` intacto: observado com `curl` (passo 11b), resposta HTTP `400` com `-32602 Invalid or expired requestState`.
 - **Estado das Tasks na memória do agente.** As Tasks vivem na memória do processo do agente e se perdem se ele reiniciar. O registro da pausa (com o `requestState`) fica no anexo privado da Task, que é descartado em qualquer estado terminal; ele não é devolvido nas respostas A2A.
 - **Cliente MCP próprio.** O agente usa um cliente `httpx` escrito à mão (`agente/src/agente/mcp_host/client.py`) em vez do `ClientSession` do SDK. O cliente do SDK responderia a elicitation por conta própria por um callback; aqui é preciso ver o `input_required` cru para pausar a Task. Um contador de ids JSON-RPC único no processo mantém os ids distintos entre chamadas e retries.
+- **Descoberta em runtime.** Cada Task nova começa com `tools/list`; o agente só chama `reservar_sala` se ela foi anunciada e se o `inputSchema` anunciado aceita os argumentos do pedido (campos `required` presentes, nenhum campo fora de `properties`). Caso contrário a Task termina em `TASK_STATE_FAILED` sem chegar ao `tools/call`. É checagem de forma do protocolo, não regra de sala.
 - **Rastreamento.** O `traceparent` recebido pelo agente é propagado a cada request MCP: o trace-id é herdado e cada chamada ganha um span-id novo. Uma Task pausada e retomada deixa quatro linhas `mcp` no stderr do servidor (`tools/list`, `resources/read` e dois `tools/call` com ids diferentes).
 - **Determinismo.** O agente interpreta um pedido de formato fixo (`reservar sala=... inicio=... fim=... responsavel=...`) e a escolha (`escolha=<sala>` ou `escolha=recusar`) por regras; não há LLM em nenhum dos dois pacotes.
 - **Dois processos, só HTTP.** O agente nunca importa `servidor_mcp`; as duas pontas só conversam por MCP sobre HTTP.
