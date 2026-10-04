@@ -36,7 +36,7 @@ def status_text(task):
 def stack(start_mcp_server, start_agent):
     mcp = start_mcp_server()
     agent = start_agent(env={"MCP_URL": f"http://localhost:{mcp.port}/mcp"})
-    probe = send(agent, n=100)
+    probe = send(agent, COMMAND.replace("sala-aquario", "sala-delorean"), n=100)
     if STUB_SKILL_NAO_IMPLEMENTADA in status_text(probe):
         pytest.skip("consumer feature not registered yet (F08)")
     if "reservar_sala nao encontrada" in status_text(probe):
