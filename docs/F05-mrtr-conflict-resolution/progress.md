@@ -19,15 +19,18 @@
 **Validation:** lint — no tooling declared (soft-fail) · typecheck — none declared (soft-fail) · tests 339 passed, 7 skipped ✅ (full suite; +17 new)
 **Commit:** feat(F05): request-state security and startup
 
-## Stage 2: Conflict Domain — ⬜ pending
+## Stage 2: Conflict Domain — ✅ done
 
-- [ ] **4. Alternatives Rule**
-- [ ] **5. Sealed Request Payload**
+- [x] **4. Alternatives Rule**
+- [x] **5. Sealed Request Payload**
 
-**Observations:** _(none yet)_
+**Observations:**
+- `EstadoDoPedido` declares the four constant fields (`v`, `ferramenta`, `chave`) with defaults after the required ones; `codificar` writes the A6 key order explicitly, so field order in the dataclass is irrelevant to the wire.
+- `decodificar` rejects booleans for `v` and `expira` (`bool` is an `int` in Python) and non-string input (returns `None`, never raises).
+- Extra tests beyond the spec list: spec-example byte-for-byte encoding, non-string input, bool rejection.
 
-**Validation:** _(not run)_
-**Commit:** _(none)_
+**Validation:** lint — no tooling (soft-fail) · typecheck — none (soft-fail) · tests 374 passed, 7 skipped ✅ (full suite; +35 new)
+**Commit:** feat(F05): alternatives rule and sealed payload
 
 ## Stage 3: MRTR Tool Flow — ⬜ pending
 
