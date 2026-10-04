@@ -1,4 +1,4 @@
-"""F05: MCP-typed helpers for the Multi Round-Trip Request flow."""
+"""MCP-typed helpers for the Multi Round-Trip Request flow."""
 
 from __future__ import annotations
 

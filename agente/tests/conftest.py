@@ -18,8 +18,22 @@ from starlette.testclient import TestClient
 
 from agente.app import build_app
 from agente.config import Settings
-from agente.handlers import Handlers, stub_continuation_handler, stub_new_task_handler
+from agente.handlers import Handlers
 from agente.protocol import TaskState
+
+
+FAILING_NEW_TASK_TEXT = "falha do handler de teste"
+FAILING_CONTINUATION_TEXT = "falha da continuacao de teste"
+
+
+async def failing_new_task_handler(ctx, task):
+    """Test double: fails every new Task with a fixed message."""
+    task.transition(TaskState.FAILED, FAILING_NEW_TASK_TEXT)
+
+
+async def failing_continuation_handler(ctx, task):
+    """Test double: fails every continuation with a fixed message."""
+    task.transition(TaskState.FAILED, FAILING_CONTINUATION_TEXT)
 
 
 class FixedIds:
@@ -129,8 +143,8 @@ class Scripted:
 
     def handlers(self) -> Handlers:
         return Handlers(
-            new_task=self._make(self.new_steps, stub_new_task_handler),
-            continuation=self._make(self.cont_steps, stub_continuation_handler),
+            new_task=self._make(self.new_steps, failing_new_task_handler),
+            continuation=self._make(self.cont_steps, failing_continuation_handler),
         )
 
 
@@ -170,7 +184,7 @@ def make_client():
     def factory(handlers=None, ids=None, public_url="http://localhost:7300", store=None):
         settings = Settings("127.0.0.1", 7300, public_url)
         log = io.StringIO()
-        handlers = handlers or Handlers(stub_new_task_handler, stub_continuation_handler)
+        handlers = handlers or Handlers(failing_new_task_handler, failing_continuation_handler)
         app = build_app(settings, handlers=handlers, ids=ids, store=store, log_stream=log)
         client = TestClient(app, base_url="http://127.0.0.1:7300")
         client.__enter__()

@@ -11,13 +11,13 @@ BANNER_SALAS = "salas carregadas: {n}"
 BANNER_RESERVAS = "reservas iniciais: {n}"
 BANNER_POLITICA = "politica de uso: versao {versao}"
 
-# F02: wire-visible strings of the catalog tool and the policy resource.
+# Wire-visible strings of the catalog tool and the policy resource.
 DESCRICAO_LISTAR_SALAS = "Lista todas as salas com capacidade e recursos."
 POLITICA_NOME = "politica-de-uso"
 POLITICA_TITULO = "Politica de uso das salas"
 POLITICA_DESCRICAO = "Politica de uso das salas. A primeira linha declara a versao no formato versao: <valor>."
 
-# F03: availability tool description and policy validation messages (shared with F04/F05).
+# Availability tool description and policy validation messages (shared with the reservation).
 DESCRICAO_CONSULTAR_DISPONIBILIDADE = "Diz se uma sala esta livre no intervalo, e quais reservas conflitam."
 SALA_INEXISTENTE = "Sala inexistente: {sala}"
 HORARIO_INVALIDO = "Horario invalido: {valor}"
@@ -25,11 +25,11 @@ INTERVALO_INVALIDO = "Intervalo invalido: fim deve ser posterior a inicio"
 FORA_DA_JANELA = "Fora da janela de uso: a politica permite reservas entre 08:00 e 20:00"
 DURACAO_ACIMA_DO_LIMITE = "Duracao acima do limite: a politica permite no maximo 2 horas"
 
-# F04: reservation tool description and failure messages.
+# Reservation tool description and failure messages.
 DESCRICAO_RESERVAR_SALA = "Reserva uma sala. Se o intervalo estiver ocupado, pergunta qual alternativa usar."
 FALHA_INTERNA_RESERVA = "Falha interna ao registrar a reserva"
 
-# F05: MRTR conflict resolution and request-state security.
+# MRTR conflict resolution and request-state security.
 SEGREDO_INVALIDO = (
     "REQUEST_STATE_SECRET ausente ou com menos de 32 bytes: "
     'gere com python3 -c "import secrets; print(secrets.token_hex(32))"'

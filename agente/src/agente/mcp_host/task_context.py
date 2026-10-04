@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from agente import mensagens
 from agente.mcp_host.client import McpClient, ToolInfo
@@ -23,6 +25,21 @@ class TaskMcpContext:
     @property
     def tool_names(self) -> tuple[str, ...]:
         return tuple(tool.name for tool in self.tools)
+
+    def tool(self, name: str) -> ToolInfo | None:
+        return next((tool for tool in self.tools if tool.name == name), None)
+
+
+def accepts_arguments(tool: ToolInfo, arguments: Mapping[str, Any]) -> bool:
+    """Shape check against the discovered `inputSchema`: required names sent, no unknown names."""
+    schema = tool.input_schema
+    if schema is None:
+        return True
+    required = schema.get("required")
+    if isinstance(required, list) and not set(required) <= set(arguments):
+        return False
+    properties = schema.get("properties")
+    return not isinstance(properties, dict) or set(arguments) <= set(properties)
 
 
 def extract_policy_version(text: str) -> str | None:

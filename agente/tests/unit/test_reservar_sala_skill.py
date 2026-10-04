@@ -66,6 +66,14 @@ def new_task(fixed_ids, text=TEXT, traceparent=TP):
     return ctx, store.handle(task_id)
 
 
+async def unexpected_pause(ctx, task, handoff):
+    raise AssertionError("this flow must not pause")
+
+
+def skill(mock):
+    return make_reservar_sala_handler(mock.client, on_input_required=unexpected_pause)
+
+
 def run(handler, ctx, task):
     asyncio.run(handler(ctx, task))
     return task.snapshot()
@@ -78,7 +86,7 @@ def status_text(snap):
 def test_malformed_request_fails_without_mcp_requests(mock_mcp, fixed_ids):
     mock = mock_mcp(answers())
     ctx, task = new_task(fixed_ids, "reservar sala=sala-porao")
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
     assert status_text(snap) == (
         "Pedido invalido: use reservar sala=<id> inicio=<iso8601> fim=<iso8601> responsavel=<nome>"
@@ -91,7 +99,7 @@ def test_malformed_request_fails_without_mcp_requests(mock_mcp, fixed_ids):
 def test_free_room_completes_with_artifact(mock_mcp, wire, fixed_ids):
     mock = mock_mcp(free_flow(wire))
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert [b["method"] for b in mock.bodies] == ["tools/list", "resources/read", "tools/call"]
     assert snap["status"]["state"] == "TASK_STATE_COMPLETED"
     assert [m["role"] for m in snap["history"]] == ["ROLE_USER", "ROLE_AGENT"]
@@ -106,7 +114,7 @@ def test_free_room_completes_with_artifact(mock_mcp, wire, fixed_ids):
 def test_tool_call_arguments_are_the_parsed_tokens(mock_mcp, wire, fixed_ids):
     mock = mock_mcp(free_flow(wire))
     ctx, task = new_task(fixed_ids)
-    run(make_reservar_sala_handler(mock.client), ctx, task)
+    run(skill(mock), ctx, task)
     params = mock.bodies[2]["params"]
     assert params["name"] == "reservar_sala"
     expected = parse_reservation_request(TEXT).arguments()
@@ -117,7 +125,7 @@ def test_tool_call_arguments_are_the_parsed_tokens(mock_mcp, wire, fixed_ids):
 def test_all_requests_share_task_trace_id(mock_mcp, wire, fixed_ids):
     mock = mock_mcp(free_flow(wire))
     ctx, task = new_task(fixed_ids)
-    run(make_reservar_sala_handler(mock.client), ctx, task)
+    run(skill(mock), ctx, task)
     traces = {b["params"]["_meta"]["traceparent"].split("-")[1] for b in mock.bodies}
     assert traces == {TRACE}
 
@@ -132,7 +140,7 @@ def test_complete_error_fails_with_verbatim_text(mock_mcp, wire, fixed_ids):
         )
     )
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
     assert status_text(snap) == text
     assert snap["history"][-1]["parts"][0]["text"] == text
@@ -142,7 +150,7 @@ def test_complete_error_fails_with_verbatim_text(mock_mcp, wire, fixed_ids):
 def test_mcp_unavailable_fails_task(mock_mcp, fixed_ids):
     mock = mock_mcp(answers(httpx.ConnectError("down")))
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
     assert status_text(snap) == "Servidor MCP indisponivel"
     assert len(mock.requests) == 1
@@ -151,7 +159,7 @@ def test_mcp_unavailable_fails_task(mock_mcp, fixed_ids):
 def test_missing_tool_fails_after_discovery(mock_mcp, fixed_ids):
     mock = mock_mcp(answers({"resultType": "complete", "tools": [{"name": "listar_salas"}]}))
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
     assert status_text(snap) == "Ferramenta reservar_sala nao encontrada no servidor MCP"
     assert len(mock.requests) == 1
@@ -161,7 +169,7 @@ def test_policy_without_version_fails(mock_mcp, wire, fixed_ids):
     policy = {"contents": [{"uri": "politica://uso", "mimeType": "text/markdown", "text": "# Politica"}]}
     mock = mock_mcp(answers(result_of(wire, "01-tools-list.json"), policy))
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
     assert status_text(snap) == "Politica de uso sem versao declarada"
     assert [b["method"] for b in mock.bodies] == ["tools/list", "resources/read"]
@@ -191,13 +199,35 @@ def test_input_required_goes_to_pause_hook_with_handoff(mock_mcp, wire, fixed_id
     assert snap["artifacts"] == []
 
 
-def test_stub_pause_hook_fails_task(mock_mcp, wire, fixed_ids):
-    mock = mock_mcp(conflict_flow(wire))
+def test_malformed_request_passes_through_working_before_failing(mock_mcp, fixed_ids):
+    mock = mock_mcp(answers())
+    ctx, task = new_task(fixed_ids, "reservar sala=sala-porao")
+    store = task._store
+    seen = []
+    original = store._transition
+
+    def recording(task_id, state, text):
+        seen.append(state)
+        original(task_id, state, text)
+
+    store._transition = recording
+    run(skill(mock), ctx, task)
+    assert seen == [TaskState.WORKING, TaskState.FAILED]
+
+
+def test_incompatible_discovered_schema_fails_before_tools_call(mock_mcp, wire, fixed_ids):
+    tools = json.loads(json.dumps(result_of(wire, "01-tools-list.json")))
+    for tool in tools["tools"]:
+        if tool["name"] == "reservar_sala":
+            tool["inputSchema"]["required"].append("motivo")
+    mock = mock_mcp(answers(tools, result_of(wire, "05-resources-read-politica.json")))
     ctx, task = new_task(fixed_ids)
-    snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+    snap = run(skill(mock), ctx, task)
+    assert [b["method"] for b in mock.bodies] == ["tools/list", "resources/read"]
     assert snap["status"]["state"] == "TASK_STATE_FAILED"
-    assert status_text(snap) == "Pausa para escolha de alternativa ainda nao implementada"
-    assert snap["artifacts"] == []
+    assert status_text(snap) == (
+        "Ferramenta reservar_sala anunciada com inputSchema incompativel com o pedido"
+    )
 
 
 def test_handoff_repr_hides_request_state(wire):
@@ -218,6 +248,6 @@ def test_same_text_gives_same_state_and_message(mock_mcp, wire, fixed_ids):
     for _ in range(2):
         mock = mock_mcp(free_flow(wire))
         ctx, task = new_task(fixed_ids)
-        snap = run(make_reservar_sala_handler(mock.client), ctx, task)
+        snap = run(skill(mock), ctx, task)
         results.append((snap["status"]["state"], status_text(snap)))
     assert results[0] == results[1]

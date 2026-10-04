@@ -1,4 +1,4 @@
-"""F03: pure policy rules shared by every booking path (no MCP types, no I/O, no clock)."""
+"""Pure policy rules shared by every booking path (no MCP types, no I/O, no clock)."""
 
 from __future__ import annotations
 

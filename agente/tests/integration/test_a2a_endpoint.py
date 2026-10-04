@@ -41,9 +41,9 @@ def test_send_message_without_task_id_creates_new_task(make_client, send):
     assert a["id"] != b["id"] and a["contextId"] != b["contextId"]
 
 
-def test_stub_skill_fails_task_with_fixed_message(make_client, send):
+def test_handler_failure_message_is_status_and_last_history_entry(make_client, send):
     task = send(make_client().client).json()["result"]["task"]
-    text = "Skill reservar-sala ainda nao implementada"
+    text = "falha do handler de teste"
     assert task["status"]["state"] == "TASK_STATE_FAILED"
     assert task["status"]["message"]["parts"] == [{"text": text}]
     assert task["history"][-1] == task["status"]["message"]

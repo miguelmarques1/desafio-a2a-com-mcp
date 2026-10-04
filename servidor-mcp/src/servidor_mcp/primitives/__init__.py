@@ -1,9 +1,8 @@
 """Registration hook for MCP primitives (tools and resources).
 
-Contract: each of F02-F05 adds a module in this package exposing
-``register(server, dominio)`` and appends it to ``REGISTRARS``. The tuple order
-defines the ``tools/list`` order (F02 listar_salas, F03 consultar_disponibilidade,
-F04/F05 reservar_sala). Registrars receive the ``MCPServer`` and the ``Dominio``
+Contract: each primitive module in this package exposes ``register(server, dominio)``
+and is listed in ``REGISTRARS``. The tuple order defines the ``tools/list`` order
+(listar_salas, consultar_disponibilidade, reservar_sala). Registrars receive the ``MCPServer`` and the ``Dominio``
 and must not keep module-level state.
 """
 

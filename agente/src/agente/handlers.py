@@ -1,4 +1,4 @@
-"""Extension points: request context, handler protocols and the stub handlers."""
+"""Extension points: request context and handler protocols."""
 
 from __future__ import annotations
 
@@ -6,8 +6,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-from agente import mensagens
-from agente.protocol import Message, Part, Role, TaskState
+from agente.protocol import Message, Part, Role
 from agente.task_store import TaskHandle
 
 
@@ -56,10 +55,3 @@ class Handlers:
     continuation: ContinuationHandler
     aclose: Callable[[], Awaitable[None]] | None = None
 
-
-async def stub_new_task_handler(ctx: RequestContext, task: TaskHandle) -> None:
-    task.transition(TaskState.FAILED, mensagens.STUB_SKILL_NAO_IMPLEMENTADA)
-
-
-async def stub_continuation_handler(ctx: RequestContext, task: TaskHandle) -> None:
-    task.transition(TaskState.FAILED, mensagens.STUB_CONTINUACAO_NAO_IMPLEMENTADA)

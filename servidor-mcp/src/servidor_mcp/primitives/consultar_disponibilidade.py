@@ -1,4 +1,4 @@
-"""F03: tool ``consultar_disponibilidade``."""
+"""Tool ``consultar_disponibilidade``."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""F04: reservation domain core (id generation and atomic check-then-append)."""
+"""Reservation domain core (id generation and atomic check-then-append)."""
 
 from __future__ import annotations
 

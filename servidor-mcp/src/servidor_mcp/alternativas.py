@@ -1,4 +1,4 @@
-"""F05: pure alternatives rule (no MCP types, no I/O, no clock)."""
+"""Pure alternatives rule (no MCP types, no I/O, no clock)."""
 
 from __future__ import annotations
 

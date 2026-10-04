@@ -1,4 +1,4 @@
-"""F05: payload sealed inside ``requestState`` (pure: encode, decode, expiry)."""
+"""Payload sealed inside ``requestState`` (pure: encode, decode, expiry)."""
 
 from __future__ import annotations
 

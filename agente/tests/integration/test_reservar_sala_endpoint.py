@@ -1,6 +1,7 @@
 import json
 
-from agente.handlers import Handlers, stub_continuation_handler
+from agente.handlers import Handlers
+from agente.skills.bridge import pause_for_choice
 from agente.skills.reservar_sala import make_reservar_sala_handler
 
 TRACE = "4bf92f3577b34da6a3ce929d0e0e4736"
@@ -33,9 +34,13 @@ def flow(wire, last="02-tools-call-livre.json"):
     )
 
 
+async def unused_continuation(ctx, task):
+    raise AssertionError("these tests never continue a Task")
+
+
 def app_with_skill(make_client, mock, fixed_ids):
-    handlers = Handlers(make_reservar_sala_handler(mock.client), stub_continuation_handler)
-    return make_client(handlers, ids=fixed_ids())
+    skill = make_reservar_sala_handler(mock.client, on_input_required=pause_for_choice)
+    return make_client(Handlers(skill, unused_continuation), ids=fixed_ids())
 
 
 def test_send_message_free_room_returns_completed_task(make_client, mock_mcp, wire, send, fixed_ids):
@@ -94,14 +99,14 @@ def test_traceparent_header_reaches_mcp_meta(make_client, mock_mcp, wire, send, 
     assert {b["params"]["_meta"]["traceparent"].split("-")[1] for b in mock.bodies} == {TRACE}
 
 
-def test_no_request_state_in_any_response_after_stub_pause(make_client, mock_mcp, wire, send, a2a_post, fixed_ids):
+def test_no_request_state_in_any_response_after_pause(make_client, mock_mcp, wire, send, a2a_post, fixed_ids):
     state = result_of(wire, "03-tools-call-conflito-input-required.json")["requestState"]
     mock = mock_mcp(flow(wire, "03-tools-call-conflito-input-required.json"))
     app = app_with_skill(make_client, mock, fixed_ids)
     card = app.client.get("/.well-known/agent-card.json")
     sent = send(app.client, TEXT)
     task = sent.json()["result"]["task"]
-    assert task["status"]["state"] == "TASK_STATE_FAILED"
+    assert task["status"]["state"] == "TASK_STATE_INPUT_REQUIRED"
     got = a2a_post(app.client, "GetTask", {"id": task["id"]}, id=2)
     for body in (card.text, sent.text, got.text):
         assert not any(state[i : i + 40] in body for i in range(0, len(state) - 39, 20))

@@ -1,13 +1,13 @@
-"""Registration hook wiring the skill (F08) and the bridge (F09).
+"""Registration hook wiring the skill and the bridge.
 
 Contract:
-- `new_task` is the `reservar-sala` skill handler (F08), with the bridge's `pause_for_choice`
+- `new_task` is the `reservar-sala` skill handler, with the bridge's `pause_for_choice`
   as its input-required hook.
-- `continuation` is the bridge's continuation handler (F09); both share the one `McpClient`.
-- Shared resources (e.g. F06's MCP client) are built inside `build_handlers`,
+- `continuation` is the bridge's continuation handler; both share the one `McpClient`.
+- Shared resources (e.g. the MCP client) are built inside `build_handlers`,
   never at import time, and released through `Handlers.aclose`, which the app
   awaits on shutdown.
-- F08/F09 must capture the `McpClient` built below in their handler closures: one client
+- Handlers capture the `McpClient` built below in their closures: one client
   (one id counter, one connection pool) serves the whole process.
 - A handler is `async (RequestContext, TaskHandle) -> None` and must leave the
   Task terminal or INPUT_REQUIRED.

@@ -1,4 +1,4 @@
-"""Per-request client-capability accessors (consumed by F05)."""
+"""Per-request client-capability accessors (used by the MRTR flow)."""
 
 from __future__ import annotations
 

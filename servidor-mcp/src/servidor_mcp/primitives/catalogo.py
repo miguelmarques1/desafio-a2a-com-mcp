@@ -1,4 +1,4 @@
-"""F02: tool ``listar_salas`` and static resource ``politica://uso``."""
+"""Tool ``listar_salas`` and static resource ``politica://uso``."""
 
 from __future__ import annotations
 

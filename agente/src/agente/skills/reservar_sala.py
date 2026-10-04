@@ -1,6 +1,6 @@
-"""`reservar-sala` skill: new-Task handler, input-required hand-off and the F08 stub pause hook.
+"""`reservar-sala` skill: new-Task handler and the input-required hand-off.
 
-F09 plugs its pause in through `make_reservar_sala_handler(client, on_input_required=...)`.
+The bridge plugs its pause in through `make_reservar_sala_handler(client, on_input_required=...)`.
 The agent holds no domain logic: every decision about rooms, times and conflicts comes from MCP.
 """
 
@@ -17,6 +17,7 @@ from agente.mcp_host import (
     McpClient,
     ProtocolFailure,
     TraceContext,
+    accepts_arguments,
     open_task_context,
 )
 from agente.protocol import TaskState
@@ -41,28 +42,27 @@ class InputRequiredHandler(Protocol):
     ) -> None: ...
 
 
-async def stub_input_required_handler(
-    ctx: RequestContext, task: TaskHandle, handoff: InputRequiredHandoff
-) -> None:
-    task.transition(TaskState.FAILED, mensagens.STUB_PAUSA_NAO_IMPLEMENTADA)
-
-
 def make_reservar_sala_handler(
     client: McpClient,
     *,
-    on_input_required: InputRequiredHandler = stub_input_required_handler,
+    on_input_required: InputRequiredHandler,
 ) -> NewTaskHandler:
     async def handle(ctx: RequestContext, task: TaskHandle) -> None:
+        task.transition(TaskState.WORKING)
         request = parse_reservation_request(ctx.message.text)
         if request is None:
-            task.transition(TaskState.FAILED, mensagens.PEDIDO_INVALIDO)
+            fail_task(task, mensagens.PEDIDO_INVALIDO)
             return
-        task.transition(TaskState.WORKING)
         context = await open_task_context(client, ctx.traceparent)
         if isinstance(context, ProtocolFailure):
             fail_task(task, context.message)
             return
-        outcome = await client.call_tool(context.trace, RESERVAR_SALA, request.arguments())
+        arguments = request.arguments()
+        tool = context.tool(RESERVAR_SALA)
+        if tool is not None and not accepts_arguments(tool, arguments):
+            fail_task(task, mensagens.MCP_ARGUMENTOS_INCOMPATIVEIS.format(nome=RESERVAR_SALA))
+            return
+        outcome = await client.call_tool(context.trace, RESERVAR_SALA, arguments)
         if isinstance(outcome, InputRequired):
             handoff = InputRequiredHandoff(request, context.policy_version, context.trace, outcome)
             await on_input_required(ctx, task, handoff)

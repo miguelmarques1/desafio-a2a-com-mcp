@@ -1,12 +1,9 @@
-"""Task-level F06 criteria. Each test is skipped while the F07 stub handlers are still in place
-(F08 for new Tasks, F09 for continuations) or while the MCP server lacks reservar_sala."""
+"""Task-level MCP host criteria, end to end against both real processes."""
 
 import json
 import urllib.request
 
 import pytest
-
-from agente.mensagens import STUB_SKILL_NAO_IMPLEMENTADA
 
 TRACE = "4bf92f3577b34da6a3ce929d0e0e4736"
 TP = f"00-{TRACE}-00f067aa0ba902b7-01"
@@ -37,10 +34,7 @@ def stack(start_mcp_server, start_agent):
     mcp = start_mcp_server()
     agent = start_agent(env={"MCP_URL": f"http://localhost:{mcp.port}/mcp"})
     probe = send(agent, COMMAND.replace("sala-aquario", "sala-delorean"), n=100)
-    if STUB_SKILL_NAO_IMPLEMENTADA in status_text(probe):
-        pytest.skip("consumer feature not registered yet (F08)")
-    if "reservar_sala nao encontrada" in status_text(probe):
-        pytest.skip("MCP server lacks reservar_sala")
+    assert status_text(probe) == "Sala inexistente: sala-delorean"
     mcp.lines.clear()
     return mcp, agent
 
@@ -156,8 +150,7 @@ def test_retry_uses_new_id_and_verbatim_state(stack):
     mcp, agent = stack
     conflict = COMMAND.replace("sala-aquario", "sala-garagem").replace("10:00", "14:00").replace("11:00", "15:00")
     task = send(agent, conflict)
-    if task["status"]["state"] != "TASK_STATE_INPUT_REQUIRED":
-        pytest.skip("consumer feature not registered yet (F09)")
+    assert task["status"]["state"] == "TASK_STATE_INPUT_REQUIRED"
     done = send(agent, "escolha=sala-fusca", task_id=task["id"], n=2)
     assert done["status"]["state"] == "TASK_STATE_COMPLETED"
     calls = [r for r in rows(mcp) if r[0] == "tools/call" and r[2] == "reservar_sala"]

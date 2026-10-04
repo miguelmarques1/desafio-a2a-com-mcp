@@ -1,4 +1,4 @@
-"""F03: shared execution-error tool result (text identical to the policy message, no SDK prefix)."""
+"""Shared execution-error tool result (text identical to the policy message, no SDK prefix)."""
 
 from __future__ import annotations
 

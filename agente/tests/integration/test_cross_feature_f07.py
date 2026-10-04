@@ -1,33 +1,12 @@
-"""F07 contracts consumed by F08/F09 (PRD Section 9, Cross-Feature Integration).
-
-Each test runs both processes and is skipped while the handler it needs is still
-the F07 stub, so it activates by itself as F08/F09 land.
-"""
+"""A2A server contracts exercised by the skill and the bridge, against both real processes."""
 
 import json
 import urllib.request
 
 import pytest
 
-from agente import handlers as handlers_module
-from agente.config import load_settings
-from agente.skills import build_handlers
-
 TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
 TRACEPARENT = f"00-{TRACE_ID}-00f067aa0ba902b7-01"
-PENDING = "consumer feature not registered yet"
-
-
-def _registered():
-    built = build_handlers(load_settings({}))
-    return (
-        built.new_task is not handlers_module.stub_new_task_handler,
-        built.continuation is not handlers_module.stub_continuation_handler,
-    )
-
-
-needs_f08 = pytest.mark.skipif(not _registered()[0], reason=PENDING)
-needs_f09 = pytest.mark.skipif(not _registered()[1], reason=PENDING)
 
 
 def rpc(port, method, params, rpc_id=1, traceparent=None):
@@ -56,7 +35,6 @@ def both(start_mcp_server, start_agent):
     return mcp, agent
 
 
-@needs_f08
 def test_tasks_created_by_skill_are_retrievable_by_get_task(both):
     _, agent = both
     text = (
@@ -73,8 +51,6 @@ def test_tasks_created_by_skill_are_retrievable_by_get_task(both):
     )
 
 
-@needs_f08
-@needs_f09
 def test_traceparent_trace_id_reaches_every_mcp_request_of_the_task(both):
     mcp, agent = both
     before = len(mcp.lines)
@@ -98,7 +74,6 @@ def test_traceparent_trace_id_reaches_every_mcp_request_of_the_task(both):
     assert lines and all(TRACE_ID in ln for ln in lines)
 
 
-@needs_f09
 def test_continuation_updates_same_task_history(both):
     _, agent = both
     text = (

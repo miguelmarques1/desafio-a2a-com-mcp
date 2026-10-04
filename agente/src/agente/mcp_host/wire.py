@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from typing import Any
 
@@ -19,7 +20,7 @@ def build_meta(traceparent: str) -> dict[str, Any]:
     return {
         "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
         "io.modelcontextprotocol/clientInfo": dict(CLIENT_INFO),
-        "io.modelcontextprotocol/clientCapabilities": {"elicitation": {"form": {}}},
+        "io.modelcontextprotocol/clientCapabilities": copy.deepcopy(CLIENT_CAPABILITIES),
         "traceparent": traceparent,
     }
 

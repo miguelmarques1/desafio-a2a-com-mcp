@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from agente.mcp_host import ProtocolFailure, TaskMcpContext, open_task_context
+from agente.mcp_host import ToolInfo, accepts_arguments
 from agente.mcp_host.task_context import extract_policy_version
 
 
@@ -122,3 +123,21 @@ def test_policy_read_failure_propagates(mock_mcp):
 )
 def test_extract_policy_version_matches_server_rule(text, expected):
     assert extract_policy_version(text) == expected
+
+
+ARGS = {"sala": "s", "inicio": "i", "fim": "f", "responsavel": "r"}
+PROPS = {key: {"type": "string"} for key in ARGS}
+
+
+@pytest.mark.parametrize(
+    ("schema", "ok"),
+    [
+        (None, True),
+        ({"type": "object"}, True),
+        ({"type": "object", "properties": PROPS, "required": list(ARGS)}, True),
+        ({"type": "object", "properties": PROPS, "required": [*ARGS, "extra"]}, False),
+        ({"type": "object", "properties": {"sala": {"type": "string"}}}, False),
+    ],
+)
+def test_accepts_arguments_checks_required_and_known_names(schema, ok):
+    assert accepts_arguments(ToolInfo("reservar_sala", schema), ARGS) is ok

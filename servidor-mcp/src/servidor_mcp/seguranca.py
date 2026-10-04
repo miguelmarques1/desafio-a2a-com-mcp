@@ -1,4 +1,4 @@
-"""F05: request-state secret validation and the SDK sealing policy."""
+"""Request-state secret validation and the SDK sealing policy."""
 
 from __future__ import annotations
 

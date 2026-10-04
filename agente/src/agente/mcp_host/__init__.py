@@ -1,6 +1,6 @@
 """MCP host client: the agent's inward-facing half, speaking only the MCP wire contract.
 
-Rules for consumers (F08, F09):
+Rules for consumers (the skill and the bridge):
 - Call `open_task_context(client, ctx.traceparent)` once per new Task, before any `call_tool`;
   on `ProtocolFailure` fail the Task with `failure.message` verbatim.
 - Match exhaustively on the four outcome types. Never catch transport exceptions: the client
@@ -24,7 +24,13 @@ from agente.mcp_host.outcomes import (
     accept_response,
     decline_response,
 )
-from agente.mcp_host.task_context import POLICY_URI, RESERVAR_SALA, TaskMcpContext, open_task_context
+from agente.mcp_host.task_context import (
+    POLICY_URI,
+    RESERVAR_SALA,
+    TaskMcpContext,
+    accepts_arguments,
+    open_task_context,
+)
 from agente.mcp_host.trace_context import TraceContext
 
 __all__ = [
@@ -40,6 +46,7 @@ __all__ = [
     "ToolOutcome",
     "TraceContext",
     "accept_response",
+    "accepts_arguments",
     "decline_response",
     "open_task_context",
 ]

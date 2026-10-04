@@ -21,7 +21,7 @@ class Settings:
     host: str
     port: int
     dados_dir: str | None
-    request_state_secret: str | None  # read raw; validated by F05, ignored by F01
+    request_state_secret: str | None  # read raw; validated in seguranca.py
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> Settings:

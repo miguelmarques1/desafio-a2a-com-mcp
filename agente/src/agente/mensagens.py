@@ -1,6 +1,6 @@
-"""Exact user-facing strings (errors, stub messages, banner, startup failures).
+"""Exact user-facing strings (errors, Task messages, banner, startup failures).
 
-F08/F09 add their own constants here; never inline user-facing strings.
+Never inline user-facing strings.
 """
 
 # JSON-RPC errors
@@ -37,24 +37,22 @@ DET_ID_TEXTO = "params.id deve ser texto nao vazio"
 
 # Task messages
 FALHA_INTERNA = "Falha interna do agente"
-STUB_SKILL_NAO_IMPLEMENTADA = "Skill reservar-sala ainda nao implementada"
-STUB_CONTINUACAO_NAO_IMPLEMENTADA = "Continuacao de Task ainda nao implementada"
 
-# Reservation skill (F08)
+# Reservation skill
 PEDIDO_INVALIDO = (
     "Pedido invalido: use reservar sala=<id> inicio=<iso8601> fim=<iso8601> responsavel=<nome>"
 )
 RESERVA_CONFIRMADA = "Reserva {reserva} confirmada na {sala}."
-STUB_PAUSA_NAO_IMPLEMENTADA = "Pausa para escolha de alternativa ainda nao implementada"
 
-# Bridge (F09)
+# Bridge
 ALTERNATIVAS = "alternativas: {lista}"
 RESERVA_RECUSADA = "Reserva recusada: nenhuma alternativa escolhida."
 
-# MCP host client (F06)
+# MCP host client
 MCP_INDISPONIVEL = "Servidor MCP indisponivel"
 MCP_ERRO = "Erro do servidor MCP: {detalhe}"
 MCP_FERRAMENTA_AUSENTE = "Ferramenta {nome} nao encontrada no servidor MCP"
+MCP_ARGUMENTOS_INCOMPATIVEIS = "Ferramenta {nome} anunciada com inputSchema incompativel com o pedido"
 POLITICA_SEM_VERSAO = "Politica de uso sem versao declarada"
 MCP_PEDIDO_NAO_SUPORTADO = "Pedido de entrada nao suportado pelo agente"
 MCP_RESPOSTA_INESPERADA = "Resposta inesperada do servidor MCP"

@@ -1,4 +1,4 @@
-"""F04/F05: tool ``reservar_sala``, the reservation creation routine and the MRTR conflict flow."""
+"""Tool ``reservar_sala``, the reservation creation routine and the MRTR conflict flow."""
 
 from __future__ import annotations
 

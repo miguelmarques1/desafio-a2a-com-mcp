@@ -1,4 +1,4 @@
-"""Outcome-to-Task mapping shared by the skill (F08) and the bridge (F09)."""
+"""Outcome-to-Task mapping shared by the skill and the bridge."""
 
 from __future__ import annotations
 
