@@ -1,6 +1,6 @@
 # Implementation Progress: Availability and Policy Validation
 
-**Status:** in progress
+**Status:** success
 **Branch:** feat/a2a-agent-and-mcp-server-implementation
 **Started:** 2026-10-03
 **Last updated:** 2026-10-03
@@ -35,3 +35,12 @@
 
 **Validation:** lint — no tooling declared (soft-fail) · typecheck — none declared (soft-fail) · tests 262 passed, 18 skipped ✅ (new: 2 resultados, 22 integration + process, cross-feature F03)
 **Commit:** feat(F03): availability tool and registry entry
+
+## Final verification
+
+- Full suite (`pytest tests` in `servidor-mcp/`, repo-root venv): 262 passed, 18 skipped, 0 failed. Skips: 10 consumer-feature gates (F01/F02/F03 tests waiting on `reservar_sala`; none gated on F03 itself), plus POSIX/root-only skips.
+- Component Overview walk-through: `regras.py`, `resultados.py`, `primitives/consultar_disponibilidade.py`, registry entry, `mensagens.py` F03 block and `pydantic==2.13.5` pin all present.
+- AC re-check: all 9 F03 acceptance criteria pass in a fresh run of their mapped tests.
+- Runtime smoke: `test_real_process_serves_consultar_disponibilidade` starts a real `python -m servidor_mcp` process and queries the tool over HTTP.
+- Soft-fails: no lint/typecheck tooling exists in the project. The validator script (`validador/validar.py`) was not run end to end because it needs the agent process (F07+) and `reservar_sala` (F04).
+- Open follow-up: the 4 gated tests in `test_cross_feature_f03.py` need F04/F05 to activate; F04/F05 must surface validation failures through `resultados.erro_de_execucao`, not `ToolError` (spec 3.3).
