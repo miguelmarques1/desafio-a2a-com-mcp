@@ -6,7 +6,7 @@ Starter do desafio: <https://github.com/devfullcycle/desafio-a2a-com-mcp>
 
 ## Como rodar
 
-**Pré-requisitos:** Python 3.10 ou mais novo, `git` e `curl`. Os comandos abaixo são para Linux/macOS (ou WSL / Git Bash). Para PowerShell, veja [Windows (PowerShell)](#windows-powershell).
+**Pré-requisitos:** Python 3.10 ou mais novo, `git` e `curl`. Em Debian/Ubuntu, instale também o módulo de ambientes virtuais (`sudo apt install python3-venv`); sem ele o `python3 -m venv` falha com um aviso sobre o `ensurepip`. Os comandos abaixo são para Linux/macOS (ou WSL / Git Bash). Para PowerShell, veja [Windows (PowerShell)](#windows-powershell).
 
 Use **três terminais**: um para o servidor MCP, um para o agente e um para o validador.
 
@@ -123,7 +123,7 @@ python -m agente
 python validador\validar.py --agente http://localhost:7300 --mcp http://localhost:7301
 ```
 
-Os scripts equivalentes são `.\subir-servidor-mcp.ps1` e `.\subir-agente.ps1` (leem o mesmo `.env`). Se a política de execução bloquear scripts: `powershell -ExecutionPolicy Bypass -File .\subir-servidor-mcp.ps1`. No Windows, `localhost` pode resolver primeiro para `::1`; se o agente não alcançar o servidor MCP, defina `MCP_URL=http://127.0.0.1:7301/mcp` antes de subir o agente.
+Se uma política de aplicativos do Windows bloquear o executável `pip.exe`, use `python -m pip install -e ./servidor-mcp -e ./agente` (é o mesmo comando). Os scripts equivalentes são `.\subir-servidor-mcp.ps1` e `.\subir-agente.ps1` (leem o mesmo `.env`). Se a política de execução bloquear scripts: `powershell -ExecutionPolicy Bypass -File .\subir-servidor-mcp.ps1`. No Windows, `localhost` pode resolver primeiro para `::1`; se o agente não alcançar o servidor MCP, defina `MCP_URL=http://127.0.0.1:7301/mcp` antes de subir o agente.
 
 ### Testes automatizados
 
@@ -316,10 +316,10 @@ O SDK também carimba sozinho `resultType` nas respostas e `serverInfo` no `_met
 
 ## Saída do validador
 
-Execução de 2026-10-04 em Windows 11 com Python 3.14.4, com o servidor MCP e o agente recém-iniciados (`./subir-servidor-mcp.sh` e `./subir-agente.sh`), código de saída `0`. A saída está colada sem cortes:
+Execução de 2026-10-04 em Windows 11 com Python 3.14.4, feita a partir de um clone limpo da branch e seguindo apenas "Como rodar" (caminho PowerShell), com o servidor MCP e o agente recém-iniciados antes da execução e código de saída `0`. A saída está colada sem cortes:
 
 ```text
-trace-id desta execucao: a8c21e1c41b41cbcc90519bb4618cbfc
+trace-id desta execucao: 5cdf82a376bf0264c35af040140ae346
 procure esse valor no stderr do servidor MCP para conferir a propagacao do traceparent.
 
 PASS 01 tools/list traz as tres tools

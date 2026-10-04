@@ -1,6 +1,6 @@
 # Implementation Progress: Delivery Documentation and Validation
 
-**Status:** in progress
+**Status:** success
 **Branch:** feat/a2a-agent-and-mcp-server-implementation
 **Started:** 2026-10-04
 **Last updated:** 2026-10-04
@@ -40,15 +40,39 @@
 - The validator output currently in the README comes from a fresh-process run on the development working copy (Windows 11, Python 3.14.4, via the `.sh` scripts). Stage 3 replaces it with the clean-clone run.
 
 **Validation:** lint n/a · typecheck n/a (none configured) · `tests` 15/15 ✅ · `servidor-mcp` 443 passed / 3 skipped ✅ · `agente` 489 passed / 1 skipped ✅ · validator 36/36 exit 0 ✅
-**Commit:** _(recorded in the next commit)_
+**Commit:** 03931ba feat(F10): delivery README and static delivery checks
 
-## Stage 3: Clean-Clone Verification and Delivery — 🔄 in progress
+## Stage 3: Clean-Clone Verification and Delivery — ✅ done (step 10 awaits user approval)
 
-- [ ] **8. Clean-Clone Run**
-- [ ] **9. Validator Output**
-- [ ] **10. Delivery on main**
+- [x] **8. Clean-Clone Run**
+- [x] **9. Validator Output**
+- [ ] **10. Delivery on main** — not performed on purpose: opening the PR into `main` needs the user's explicit approval (spec A29). Nothing was pushed.
 
-**Observations:** _(none yet)_
+**Observations:**
+- Clean clone: `git clone --branch feat/a2a-agent-and-mcp-server-implementation` of the local repo into a fresh temp dir (commit 03931ba), venv created with `py -3 -m venv`, editable install of both packages, secret exported in PowerShell, both processes started with `python -m`, as in the README's Windows subsection. Validator ran 3 times with both processes restarted each time: 36/36, exit 0, 8 `mcp` stderr rows carrying the run's trace-id every time.
+- Roteiro: the bash blocks were extracted verbatim from the README and executed in Git Bash against that clone, with the MCP restart between step 12's two blocks (same secret). Every expected value of spec A16 matched; the trace-id grep found 11 rows in the first server process's stderr.
+- Bug found only by the clean clone: `tests/test_entrega.py` was untracked in the working copy, so `test_no_secret_in_tracked_files` never scanned it; once tracked it flagged its own `["REQUEST_STATE_SECRET="]` literals. Fixed by excluding that one file from the scan.
+- `pip.exe` was blocked by a Windows Application Control policy on this machine; the run used `python -m pip install ...` (same command). The README now mentions that fallback. Not a repo defect.
+- WSL Ubuntu here has no `python3-venv` (needs `sudo apt install`), so no venv could be created there. The README prerequisites now say to install it on Debian/Ubuntu. The Linux-specific V5 check still ran in WSL on a fresh clone: `.sh` files are `-rwxr-xr-x`, LF shebang, and `./subir-agente.sh` prints the missing-venv message and exits 1.
+- Validator output in the README is run 3 of the clean clone (Windows 11, Python 3.14.4).
 
-**Validation:** _(not run)_
-**Commit:** _(none)_
+**Validation:** clean-clone validator ×3 36/36 exit 0 ✅ · Roteiro 7–13 ✅ · `tests` 15/15 ✅ · `servidor-mcp` 443 passed / 3 skipped ✅ · `agente` 489 passed / 1 skipped ✅ · starter dirs unchanged ✅
+**Commit:** _(this commit)_
+
+## Final verification
+
+**Status:** success
+
+- Full suite: `python -m pytest tests` 15/15, `servidor-mcp` 443 passed / 3 skipped, `agente` 489 passed / 1 skipped. Same counts as the end of F09 for the two packages. No lint or typecheck tooling exists in the repo.
+- Component Overview walk-through: `README.md`, the four `subir-*` scripts, `.env.example`, `.gitattributes`, `tests/test_entrega.py` all exist with the described content; `.gitignore` unchanged. `git diff b598d0a HEAD` over `servidor-mcp`, `agente`, `dados`, `validador`, `exemplos` and `.gitignore` is empty. `git diff 263f17e -- dados validador exemplos` is empty.
+- Missing from spec: none. Regressions: none. Pre-existing failures: none.
+- Acceptance criteria: all eight F10 criteria map to a passing test or to the clean-clone run (see the chat report).
+
+**Soft-fails / unverified:**
+- V1: no Python 3.10 interpreter was available (only 3.14.4 on Windows and in WSL), so the "Python ≥ 3.10" claim rests on `requires-python` and the pins, not on a 3.10 run.
+- The README's bash path (`source .venv/bin/activate`, `python3 -m venv`) was not run end to end on Linux/macOS; WSL could not create a venv. Windows PowerShell and Git Bash (via the scripts and the Roteiro blocks) were exercised, and the Linux checks were limited to V5.
+- The PowerShell scripts were exercised with a fake venv only; the `.sh` scripts were exercised with both a fake venv and the real one.
+
+**Open follow-up:**
+- Step 10: open a PR from this branch into `main` of the public fork, after the user approves. The final delivery on `main` is a user action (PRD Capabilities 7).
+- `spec.md` and `plan.md` of F10 are still untracked in the working tree (they were untracked when this run started); commit them with the PR or earlier if wanted.

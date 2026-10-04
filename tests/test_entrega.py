@@ -179,10 +179,12 @@ def _tracked_files() -> list[str]:
     _require_git()
     result = _git("ls-files")
     assert result is not None and result.returncode == 0
+    skipped = tuple(f"{d}/" for d in STARTER_DIRS)
     return [
         f
         for f in result.stdout.splitlines()
-        if f and not f.startswith(tuple(f"{d}/" for d in STARTER_DIRS)) and (ROOT / f).is_file()
+        # this file spells out the patterns it scans for, so it cannot scan itself
+        if f and not f.startswith(skipped) and f != "tests/test_entrega.py" and (ROOT / f).is_file()
     ]
 
 
