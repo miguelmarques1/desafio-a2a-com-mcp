@@ -20,13 +20,18 @@
 **Validation:** lint — no tooling declared (soft-fail) · typecheck — none declared (soft-fail) · tests 231 passed, 9 skipped ✅ (new: 90 unit in test_regras.py)
 **Commit:** feat(F03): shared policy rules
 
-## Stage 2: Availability Tool — ⬜ pending
+## Stage 2: Availability Tool — ✅ done
 
-- [ ] **5. Execution-Error Result Builder**
-- [ ] **6. Availability Tool Module**
-- [ ] **7. Registry Wiring**
+- [x] **5. Execution-Error Result Builder**
+- [x] **6. Availability Tool Module**
+- [x] **7. Registry Wiring**
 
-**Observations:** _(none yet)_
+**Observations:**
+- `REGISTRARS = (catalogo.register, consultar_disponibilidade.register)`; F04/F05 append after it.
+- The tool's `tools/list` entry equals the one in `exemplos/wire/01-tools-list.json` (asserted by `test_tool_descriptor_matches_wire_capture`).
+- F01's gated `test_consultar_disponibilidade_reports_seeded_reservations` is now active and passing.
+- Cross-feature tests that need `reservar_sala` (4 in `test_cross_feature_f03.py`, plus the F01/F02 gates) stay skipped until F04/F05 land.
+- Real-process test uses the stdlib `urllib` client, like the F02 process test.
 
-**Validation:** _(not run)_
-**Commit:** _(none)_
+**Validation:** lint — no tooling declared (soft-fail) · typecheck — none declared (soft-fail) · tests 262 passed, 18 skipped ✅ (new: 2 resultados, 22 integration + process, cross-feature F03)
+**Commit:** feat(F03): availability tool and registry entry

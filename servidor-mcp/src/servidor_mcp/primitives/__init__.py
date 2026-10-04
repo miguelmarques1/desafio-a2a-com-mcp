@@ -14,8 +14,8 @@ from collections.abc import Callable
 from mcp.server.mcpserver import MCPServer
 
 from servidor_mcp.dominio import Dominio
-from servidor_mcp.primitives import catalogo
+from servidor_mcp.primitives import catalogo, consultar_disponibilidade
 
 Registrar = Callable[[MCPServer, Dominio], None]
 
-REGISTRARS: tuple[Registrar, ...] = (catalogo.register,)
+REGISTRARS: tuple[Registrar, ...] = (catalogo.register, consultar_disponibilidade.register)
