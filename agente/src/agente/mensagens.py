@@ -40,7 +40,16 @@ FALHA_INTERNA = "Falha interna do agente"
 STUB_SKILL_NAO_IMPLEMENTADA = "Skill reservar-sala ainda nao implementada"
 STUB_CONTINUACAO_NAO_IMPLEMENTADA = "Continuacao de Task ainda nao implementada"
 
+# MCP host client (F06)
+MCP_INDISPONIVEL = "Servidor MCP indisponivel"
+MCP_ERRO = "Erro do servidor MCP: {detalhe}"
+MCP_FERRAMENTA_AUSENTE = "Ferramenta {nome} nao encontrada no servidor MCP"
+POLITICA_SEM_VERSAO = "Politica de uso sem versao declarada"
+MCP_PEDIDO_NAO_SUPORTADO = "Pedido de entrada nao suportado pelo agente"
+MCP_RESPOSTA_INESPERADA = "Resposta inesperada do servidor MCP"
+
 # Startup
+MCP_URL_INVALIDA = "MCP_URL invalida: {valor}"
 AGENT_PORT_INVALIDA = "AGENT_PORT invalida: {valor}"
 AGENT_PUBLIC_URL_INVALIDA = "AGENT_PUBLIC_URL invalida: {valor}"
 PORTA_EM_USO = "Porta {port} em uso: defina AGENT_PORT ou encerre o processo anterior"

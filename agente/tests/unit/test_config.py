@@ -35,3 +35,18 @@ def test_invalid_public_url_raises_config_error(raw):
     with pytest.raises(ConfigError) as info:
         load_settings({"AGENT_PUBLIC_URL": raw})
     assert str(info.value) == f"AGENT_PUBLIC_URL invalida: {raw}"
+
+
+def test_mcp_url_default():
+    assert load_settings({}).mcp_url == "http://localhost:7301/mcp"
+
+
+def test_mcp_url_override_kept_verbatim():
+    assert load_settings({"MCP_URL": "http://127.0.0.1:9999/mcp/"}).mcp_url == "http://127.0.0.1:9999/mcp/"
+
+
+@pytest.mark.parametrize("raw", ["localhost:7301/mcp", "ftp://x/mcp", "http://", ""])
+def test_invalid_mcp_url_raises_config_error(raw):
+    with pytest.raises(ConfigError) as exc:
+        load_settings({"MCP_URL": raw})
+    assert str(exc.value) == f"MCP_URL invalida: {raw}"
