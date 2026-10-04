@@ -47,6 +47,10 @@ PEDIDO_INVALIDO = (
 RESERVA_CONFIRMADA = "Reserva {reserva} confirmada na {sala}."
 STUB_PAUSA_NAO_IMPLEMENTADA = "Pausa para escolha de alternativa ainda nao implementada"
 
+# Bridge (F09)
+ALTERNATIVAS = "alternativas: {lista}"
+RESERVA_RECUSADA = "Reserva recusada: nenhuma alternativa escolhida."
+
 # MCP host client (F06)
 MCP_INDISPONIVEL = "Servidor MCP indisponivel"
 MCP_ERRO = "Erro do servidor MCP: {detalhe}"
